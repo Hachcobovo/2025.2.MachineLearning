@@ -16,7 +16,7 @@ from src.models import get_random_forest
 from src.evaluation import evaluate_model
 
 def main():
-    # 1. Load and Preprocess Data
+    # 1. Load Data
     data_path = os.path.join(project_root, 'data', 'processed', 'processed.csv')
 
     if not os.path.exists(data_path):
@@ -32,8 +32,7 @@ def main():
     # 2. Iterate through each feature extraction mode
     for mode in feature_modes:
         print(f"\n--- Extracting and Training on '{mode.upper()}' features ---")
-        
-        # Build features using the specific mode
+
         X_mode, feature_names_mode, _ = features.build_features(df, mode=mode, fit_tfidf=True)
         print(f"Number of features: {X_mode.shape[1]}")
 
@@ -78,7 +77,6 @@ def main():
             "Infer Time (sec)": f"{infer_time:.4f}"
         })
 
-    # 3. Display the final comparison table
     results_df = pd.DataFrame(results)
     print("\n=========================================================================================")
     print(results_df.to_string(index=False))
