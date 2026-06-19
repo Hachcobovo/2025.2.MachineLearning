@@ -15,7 +15,6 @@ from src.evaluation import evaluate_model
 def main():
 
     # 1. Load and Preprocess Data
-    # Assuming your data is stored in the root 'data' folder
     data_path = os.path.join(project_root, 'data', 'processed', 'processed.csv')
 
     if not os.path.exists(data_path):
@@ -31,7 +30,6 @@ def main():
     print(f"Feature matrix shape: {X.shape}")
 
     # 3. Train/Test Split
-    print("Splitting dataset into train and test sets (80/20)...")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )

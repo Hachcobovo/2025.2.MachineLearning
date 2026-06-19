@@ -3,7 +3,6 @@ import os
 import time
 from sklearn.model_selection import train_test_split
 
-# Add the project root directory to the Python path so we can import 'src'
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.append(project_root)
@@ -21,7 +20,6 @@ def main():
         data_path = os.path.join('data', 'processed', 'processed.csv')
         
     print(f"Loading raw data from {data_path}...")
-    # Use the modular functions from preprocessing.py to bypass the full pipeline
     raw_df = preprocessing.load_raw_csv(data_path)
     raw_df = preprocessing.normalize_columns(raw_df)
 
@@ -32,7 +30,6 @@ def main():
     raw_df["full_text"] = raw_df["method"] + " " + raw_df["url"] + " " + raw_df["body"]
     y_raw = raw_df['label'].values
 
-    # Train/Test Split MUST happen before TF-IDF fitting to prevent data leakage
     print("\nSplitting dataset into train and test sets...")
     df_train, df_test, y_train, y_test = train_test_split(
         raw_df, y_raw, test_size=0.2, random_state=42, stratify=y_raw
