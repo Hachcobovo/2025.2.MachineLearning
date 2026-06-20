@@ -11,6 +11,7 @@ from src import preprocessing
 from src import features
 from src.models import get_random_forest, get_xgboost
 from src.evaluation import evaluate_model
+from src.evaluation import plot_roc_curve
 
 def main():
 
@@ -43,29 +44,19 @@ def main():
 
     print("Training XGBoost...")
     start_train_time = time.time()
-    xgb_model.fit(
-        X_train, y_train,
-        eval_set=eval_set,
-        verbose=10
-    )
+    xgb_model.fit(X_train, y_train, eval_set=eval_set, verbose=10)
     train_time_xgb = time.time() - start_train_time
     print(f"Training completed in {train_time_xgb:.4f} seconds.")
 
-    print("Making predictions on test set...")
-    start_inference_time = time.time()
-    y_pred_xgb = xgb_model.predict(X_test)
-    y_prob_xgb = xgb_model.predict_proba(X_test)[:, 1]
-    infer_time_xgb = time.time() - start_inference_time
-
-    # Use our evaluation module
-    evaluate_model(
-        name="XGBoost", 
-        y_true=y_test, 
-        y_pred=y_pred_xgb, 
-        y_prob=y_prob_xgb, 
-        train_time=train_time_xgb, 
-        infer_time=infer_time_xgb
+    print("\nEvaluating XGBoost...")
+    res_xgb = evaluate_model(
+        model=xgb_model, 
+        X_test=X_test, 
+        y_test=y_test, 
+        model_name="XGBoost", 
+        training_time=train_time_xgb
     )
+    for k, v in res_xgb.items(): print(f"{k}: {v}")
 
     # ---------------------------------------------------------
     # 5. Train and Evaluate Random Forest
@@ -79,20 +70,20 @@ def main():
     train_time_rf = time.time() - start_train_time
     print(f"Training completed in {train_time_rf:.4f} seconds.")
 
-    print("Making predictions on test set...")
-    start_inference_time = time.time()
-    y_pred_rf = rf_model.predict(X_test)
-    y_prob_rf = rf_model.predict_proba(X_test)[:, 1]
-    infer_time_rf = time.time() - start_inference_time
+    print("\nEvaluating Random Forest...")
+    res_rf = evaluate_model(
+        model=rf_model, 
+        X_test=X_test, 
+        y_test=y_test, 
+        model_name="Random Forest", 
+        training_time=train_time_rf
+    )
+    for k, v in res_rf.items(): print(f"{k}: {v}")
 
-    # Use our evaluation module
-    evaluate_model(
-        name="Random Forest", 
-        y_true=y_test, 
-        y_pred=y_pred_rf, 
-        y_prob=y_prob_rf, 
-        train_time=train_time_rf, 
-        infer_time=infer_time_rf
+    plot_roc_curve(
+        models={"XGBoost": xgb_model, "Random Forest": rf_model},
+        X_test=X_test,
+        y_test=y_test
     )
 
 if __name__ == "__main__":
