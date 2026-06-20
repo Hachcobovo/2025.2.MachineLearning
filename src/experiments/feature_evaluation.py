@@ -2,44 +2,50 @@ import sys
 import os
 import time
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import (accuracy_score, precision_score, recall_score,
-                             f1_score, roc_auc_score)
+from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, roc_auc_score)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '..'))
+project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.append(project_root)
 
 from src import preprocessing
 from src import features
 from src.models import get_random_forest
 from src.evaluation import evaluate_model
+from src.explainability import plot_feature_importance, plot_shap_summary, analyze_false_positives_negatives
 
 def main():
-    # 1. Load Data
+    # Load Data
     data_path = os.path.join(project_root, 'data', 'processed', 'processed.csv')
 
     if not os.path.exists(data_path):
         data_path = os.path.join('data', 'processed', 'processed.csv')
         
     print(f"Loading and preprocessing data from {data_path}...\n")
-    df = preprocessing.preprocess(data_path)
+    df = pd.read_csv(data_path, low_memory=False)
     y = df['label'].values
+
+    print("Splitting dataset into train and test sets...")
+    df_train, df_test, y_train, y_test = train_test_split(
+        df, y, test_size=0.2, random_state=42, stratify=y
+    )
+    
+    # Store raw test texts for the evaluation function
+    raw_test_texts = df_test['full_text'].values
 
     feature_modes = ["handcrafted", "tfidf", "hybrid"]
     results = []
 
-    # 2. Iterate through each feature extraction mode
+    # Iterate through each feature extraction mode
     for mode in feature_modes:
         print(f"\n--- Extracting and Training on '{mode.upper()}' features ---")
 
-        X_mode, feature_names_mode, _ = features.build_features(df, mode=mode, fit_tfidf=True)
-        print(f"Number of features: {X_mode.shape[1]}")
-
-        # Train/Test Split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_mode, y, test_size=0.2, random_state=42, stratify=y
-        )
+        X_train, feature_names_mode, tfidf_vec = features.build_features(df_train, mode=mode, fit_tfidf=True)
+        X_test, _, _ = features.build_features(df_test, mode=mode, fit_tfidf=False, tfidf_vectorizer=tfidf_vec)
+        
+        print(f"Number of training features: {X_train.shape[1]}")
 
         # Train Model (Using Random Forest as the baseline for this experiment)
         rf_model = get_random_forest()
@@ -57,10 +63,28 @@ def main():
             training_time=train_time
         )
 
+        # Feature Importance
+        plot_feature_importance(rf_model, feature_names_mode, top_n=10)
+        
+        # SHAP Summary (Sample 500 rows to prevent memory overload from TF-IDF)
+        print(f"\nGenerating SHAP summary for {mode.upper()} features...")
+        sample_indices = np.random.choice(X_test.shape[0], min(500, X_test.shape[0]), replace=False)
+        X_test_sample = X_test[sample_indices]
+        plot_shap_summary(rf_model, X_test_sample, feature_names_mode)
+
+        print(f"\nEvaluating Misclassifications for {mode.upper()} features:")
+        analyze_false_positives_negatives(
+            model=rf_model,
+            X_test=X_test,
+            y_test=y_test,
+            raw_texts=raw_test_texts,
+            num_samples=3
+        )
+
         # Save metrics for the final summary table
         results.append({
             "Feature Mode": mode.capitalize(),
-            "Feature Count": X_mode.shape[1],
+            "Feature Count": X_train.shape[1],
             "Accuracy": f"{res['Accuracy']:.4f}",
             "Precision": f"{res['Precision']:.4f}",
             "Recall": f"{res['Recall']:.4f}",
