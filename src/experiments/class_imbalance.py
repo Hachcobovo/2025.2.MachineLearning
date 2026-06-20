@@ -70,11 +70,6 @@ def main():
     start_train = time.time()
     rf_imbalanced.fit(X_train_imb, y_train_imb)
     train_time_imb = time.time() - start_train
-    
-    start_infer = time.time()
-    y_pred_imb = rf_imbalanced.predict(X_test_imb)
-    y_prob_imb = rf_imbalanced.predict_proba(X_test_imb)[:, 1] # Needed for ROC-AUC
-    infer_time_imb = time.time() - start_infer
 
     # Train Model 2: Aware of Imbalance (Using class_weight)
     print("Training 'Balanced' Model to fix Imbalance...")
@@ -88,35 +83,31 @@ def main():
     start_train = time.time()
     rf_fixed.fit(X_train_imb, y_train_imb)
     train_time_fixed = time.time() - start_train
-    
-    start_infer = time.time()
-    y_pred_fixed = rf_fixed.predict(X_test_imb)
-    y_prob_fixed = rf_fixed.predict_proba(X_test_imb)[:, 1]
-    infer_time_fixed = time.time() - start_infer
-
 
     # Evaluation
     print("\n" + "="*50)
     print("EXPERIMENT 4 RESULTS (Real-World Imbalance)")
     print("="*50)
 
-    evaluate_model(
-        name="1. Standard Model (No Class Weight)", 
-        y_true=y_test_imb, 
-        y_pred=y_pred_imb, 
-        y_prob=y_prob_imb,
-        train_time=train_time_imb,
-        infer_time=infer_time_imb
+    res1 = evaluate_model(
+        model=rf_imbalanced, 
+        X_test=X_test_imb, 
+        y_test=y_test_imb, 
+        model_name="1. Standard Model (No Class Weight)",
+        training_time=train_time_imb
     )
+    for k, v in res1.items(): print(f"{k}: {v}")
     
-    evaluate_model(
-        name="2. Fixed Model (Class Weight = Balanced)", 
-        y_true=y_test_imb, 
-        y_pred=y_pred_fixed, 
-        y_prob=y_prob_fixed,
-        train_time=train_time_fixed,
-        infer_time=infer_time_fixed
+    print("-" * 50)
+    
+    res2 = evaluate_model(
+        model=rf_fixed, 
+        X_test=X_test_imb, 
+        y_test=y_test_imb, 
+        model_name="2. Fixed Model (Class Weight = Balanced)",
+        training_time=train_time_fixed
     )
+    for k, v in res2.items(): print(f"{k}: {v}")
 
 if __name__ == "__main__":
     main()

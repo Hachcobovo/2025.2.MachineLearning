@@ -48,33 +48,26 @@ def main():
         rf_model.fit(X_train, y_train)
         train_time = time.time() - start_train
 
-        # Predict & Evaluate
-        start_infer = time.time()
-        y_pred = rf_model.predict(X_test)
-        y_prob = rf_model.predict_proba(X_test)[:, 1]
-        infer_time = time.time() - start_infer
-
-        # Detailed evaluation printout
-        evaluate_model(
-            name=f"RF with {mode.upper()} features", 
-            y_true=y_test, 
-            y_pred=y_pred, 
-            y_prob=y_prob, 
-            train_time=train_time, 
-            infer_time=infer_time
+        # Evaluate (Predictions and inference time happen internally now)
+        res = evaluate_model(
+            model=rf_model, 
+            X_test=X_test, 
+            y_test=y_test, 
+            model_name=f"RF with {mode.upper()} features", 
+            training_time=train_time
         )
 
         # Save metrics for the final summary table
         results.append({
             "Feature Mode": mode.capitalize(),
             "Feature Count": X_mode.shape[1],
-            "Accuracy": f"{accuracy_score(y_test, y_pred):.4f}",
-            "Precision": f"{precision_score(y_test, y_pred):.4f}",
-            "Recall": f"{recall_score(y_test, y_pred):.4f}",
-            "F1-Score": f"{f1_score(y_test, y_pred):.4f}",
-            "ROC-AUC": f"{roc_auc_score(y_test, y_prob):.4f}",
-            "Train Time (sec)": f"{train_time:.2f}",
-            "Infer Time (sec)": f"{infer_time:.4f}"
+            "Accuracy": f"{res['Accuracy']:.4f}",
+            "Precision": f"{res['Precision']:.4f}",
+            "Recall": f"{res['Recall']:.4f}",
+            "F1-Score": f"{res['F1']:.4f}",
+            "ROC-AUC": f"{res['ROC-AUC']:.4f}" if res['ROC-AUC'] else "N/A",
+            "Train Time (sec)": f"{res['Training_time(s)']:.2f}",
+            "Infer Time (sec)": f"{res['Inference_time(s)']:.4f}"
         })
 
     results_df = pd.DataFrame(results)

@@ -48,22 +48,21 @@ def main():
     rf_raw.fit(X_train_raw, y_train)
     train_time = time.time() - start_train
 
-    # Predict
-    print("Making predictions on the test set...")
-    start_infer = time.time()
-    y_pred_raw = rf_raw.predict(X_test_raw)
-    y_prob_raw = rf_raw.predict_proba(X_test_raw)[:, 1]
-    infer_time = time.time() - start_infer
-
     # 4. Evaluate using the centralized evaluation module
-    evaluate_model(
-        name="Random Forest (No Preprocessing / Un-normalized)", 
-        y_true=y_test, 
-        y_pred=y_pred_raw, 
-        y_prob=y_prob_raw, 
-        train_time=train_time, 
-        infer_time=infer_time
+    print("\nEvaluating model on the test set...")
+    res = evaluate_model(
+        model=rf_raw, 
+        X_test=X_test_raw, 
+        y_test=y_test, 
+        model_name="Random Forest (No Preprocessing / Un-normalized)", 
+        training_time=train_time
     )
+    
+    for k, v in res.items():
+        if isinstance(v, float):
+            print(f"{k}: {v:.4f}")
+        else:
+            print(f"{k}: {v}")
 
 if __name__ == "__main__":
     main()
