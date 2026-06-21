@@ -1,3 +1,4 @@
+import re
 import sys
 import os
 import time
@@ -110,12 +111,13 @@ def main():
     for k, v in res2.items(): print(f"{k}: {v}")
 
 
-    sample_indices = np.random.choice(X_test_imb.shape[0], min(500, X_test_imb.shape[0]), replace=False)
-    X_test_sample = X_test_imb[sample_indices]
+    clean_feature_names = [re.sub(r'[\[\]<>]', '_', name) for name in feature_names]
+    sample_indices = np.random.choice(X_test.shape[0], min(100, X_test.shape[0]), replace=False)
+    X_test_sample = X_test[sample_indices]
     print("\n--- SHAP Summary: Standard Imbalanced Model ---")
-    plot_shap_summary(rf_imbalanced, X_test_sample, feature_names)
+    plot_shap_summary(rf_imbalanced, X_test_sample, clean_feature_names)
     print("\n--- SHAP Summary: Balanced Model ---")
-    plot_shap_summary(rf_fixed, X_test_sample, feature_names)
+    plot_shap_summary(rf_fixed, X_test_sample, clean_feature_names)
 
     print("\nMISCLASSIFICATION COMPARISON: Imbalanced vs Balanced")
     print("\n1. Standard Imbalanced Model")

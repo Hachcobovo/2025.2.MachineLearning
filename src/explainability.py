@@ -24,11 +24,11 @@ def plot_shap_summary(model, X_sample, feature_names):
     if hasattr(X_sample, "toarray"):
         X_dense = X_sample.toarray()
     else:
-        X_dense = X_sample
+        X_dense = np.array(X_sample)
         
     X_df = pd.DataFrame(X_dense, columns=feature_names)
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X_df)
+    shap_values = explainer.shap_values(X_dense, approximate=True)
 
     if isinstance(shap_values, list) and len(shap_values) == 2:
         shap_values_to_plot = shap_values[1]

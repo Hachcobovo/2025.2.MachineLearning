@@ -1,3 +1,4 @@
+import re
 import sys
 import os
 import time
@@ -67,10 +68,11 @@ def main():
         plot_feature_importance(rf_model, feature_names_mode, top_n=10)
         
         # SHAP Summary (Sample 500 rows to prevent memory overload from TF-IDF)
+        clean_feature_names = [re.sub(r'[\[\]<>]', '_', name) for name in feature_names_mode]
         print(f"\nGenerating SHAP summary for {mode.upper()} features...")
-        sample_indices = np.random.choice(X_test.shape[0], min(500, X_test.shape[0]), replace=False)
+        sample_indices = np.random.choice(X_test.shape[0], min(100, X_test.shape[0]), replace=False)
         X_test_sample = X_test[sample_indices]
-        plot_shap_summary(rf_model, X_test_sample, feature_names_mode)
+        plot_shap_summary(rf_model, X_test_sample, clean_feature_names)
 
         print(f"\nEvaluating Misclassifications for {mode.upper()} features:")
         analyze_false_positives_negatives(

@@ -85,12 +85,13 @@ def main():
     )
 
     # SHAP Summary Plot
-    sample_indices = np.random.choice(X_test.shape[0], min(500, X_test.shape[0]), replace=False)
+    clean_feature_names = [re.sub(r'[\[\]<>]', '_', name) for name in feature_names]
+    sample_indices = np.random.choice(X_test.shape[0], min(100, X_test.shape[0]), replace=False)
     X_test_sample = X_test[sample_indices]
     print("\nSHAP summary for XGBoost")
-    plot_shap_summary(xgb_model, X_test_sample, feature_names)
+    plot_shap_summary(xgb_model, X_test_sample, clean_feature_names)
     print("\nSHAP summary for Random Forest")
-    plot_shap_summary(rf_model, X_test_sample, feature_names)
+    plot_shap_summary(rf_model, X_test_sample, clean_feature_names)
 
     # Analyze False Positives / False Negatives
     raw_test_texts = df_test['full_text'].values
