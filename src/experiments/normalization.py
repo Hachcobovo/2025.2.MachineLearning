@@ -68,10 +68,10 @@ def main():
             print(f"{k}: {v}")
     
     print("\nSHAP summary for Un-normalized Model")
-    raw_feature_names = ["tfidf_" + x for x in tfidf_vec.get_feature_names_out()]
-    sample_indices = np.random.choice(X_test_raw.shape[0], min(500, X_test_raw.shape[0]), replace=False)
+    clean_feature_names_raw = [re.sub(r'[\[\]<>]', '_', name) for name in feature_names_raw]
+    sample_indices = np.random.choice(X_test_raw.shape[0], min(100, X_test_raw.shape[0]), replace=False)
     X_test_raw_sample = X_test_raw[sample_indices]
-    plot_shap_summary(rf_raw, X_test_raw_sample, raw_feature_names)
+    plot_shap_summary(rf_raw, X_test_raw_sample, clean_feature_names_raw)
     
     raw_texts = df_test['full_text'].values
     analyze_false_positives_negatives(model=rf_raw, X_test=X_test_raw, y_test=y_test, raw_texts=raw_texts, num_samples=5)
